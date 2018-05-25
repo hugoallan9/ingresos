@@ -7,14 +7,16 @@
 #    http://shiny.rstudio.com/
 #
 
+datos_economico <- read.csv('Jerarquia_Economico.csv', sep=';')
 
-datos_tabla <- read.csv(paste0('datos_tabla', format(Sys.Date(), "%Y"),'.csv'), sep = ';')
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
   # Variables para uso en esta sesión ---------------------------------------
   
   mapaJson <-  NULL
+  datos_tabla <- NULL
   tabla_temporal <- NULL
   tabla_dinamica <- NULL
   datos_grafica <- SharedData$new(tabla_temporal)
@@ -75,16 +77,7 @@ shinyServer(function(input, output, session) {
   
   
   filaSeleccionada <- 0
-  datos_economico <- read.csv('Jerarquia_Economico.csv', sep=';')
   
-  if(is.null(datos_tabla)){
-    withProgress(message ='Leyendo la información', value = 0, {
-      datos_tabla <- read.csv(paste0('datos_tabla', format(Sys.Date(), "%Y"),'.csv'), sep = ';')
-    })    
-  }
- 
-  
-   
   output$condition <- renderText({
     condition()
   })
@@ -695,41 +688,16 @@ shinyServer(function(input, output, session) {
   })
   
   output$comparadorAño <- renderUI({
-    selectInput("yearCom","Ejercicio fiscal" ,choices = c(1998:format(Sys.Date(), "%Y")), selected = as.numeric( input$year ) -1 )  
+    selectInput("yearCom","Ejercicio fiscal" ,choices = c(1998:format(Sys.Date(), "%Y")), selected = as.numeric(format(Sys.Date(), "%Y")) -1 )  
   })
 
-
-
-  observeEvent(input$year,{
-
-      withProgress(message ='Leyendo la información', value = 0, {
-        datos_tabla <<- read.csv(paste0('datos_tabla', input$year,'.csv'), sep = ';')  
-      }) 
-    
-    # datos = gasto_tabla() %>% 
-    #   mutate( 
-    #     Acciones = shinyInput( as.character(dropdownButton( icon = icon("gear"), right = T, checkboxGroupButtons(
-    #       inputId = paste0("btFiltroN",1+numeroReactivos$y), 
-    #       choices = opciones_filtro_inicio, direction = "vertical") ) )  )
-    #   )
-    # 
-    # temp <- isolate( numeroReactivos$y )
-    # numeroReactivos$y = temp + 1
-    # numeroReactivos$x <- temp
-    # 
-    # output$tabla <- DT::renderDataTable({ 
-    #    DT::datatable( datos, escape = F,
-    #                                   options = list(orderClasses = TRUE, language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json'),
-    #                                                  preDrawCallback=JS('function() { Shiny.unbindAll(this.api().table().node()); }'),
-    #                                                  drawCallback=JS('function() { Shiny.bindAll(this.api().table().node()); } ')   ) ) %>%
-    #     DT::formatCurrency("Devengado", currency = "Q")
-    # })
-      
-
-  })
-    
   gasto_tabla <- function(filtro = '', variable = ''){
-
+    if( is.null(datos_tabla)){
+      withProgress(message ='Leyendo la información', value = 0, {
+        datos_tabla <<- read.csv('datos_tabla.csv', sep = ';')  
+      }) 
+      
+    }
     var <-  variable
     temporal <- NULL
     if( is.null(var) || var == '' ){
@@ -814,8 +782,6 @@ shinyServer(function(input, output, session) {
                                                          preDrawCallback=JS('function() { Shiny.unbindAll(this.api().table().node()); }'),
                                                          drawCallback=JS('function() { Shiny.bindAll(this.api().table().node()); } ')  )) %>% DT::formatCurrency("Devengado", currency = "Q")}
                                        , server=FALSE, escape=FALSE )
-  
- 
   
   
   
@@ -1164,7 +1130,7 @@ shinyServer(function(input, output, session) {
   })
   
   
-  datos_comparativos <- reactiveValues(data=NULL)
+  
   observeEvent(input$yearCom,{print(input$yearCom)
     withProgress(message ='Leyendo la información', value = 0, {
       datos_tabla_con <<- read.csv(paste0('datos_tabla',input$yearCom,'.csv'), sep = ';')  
@@ -1175,8 +1141,6 @@ shinyServer(function(input, output, session) {
         summarise( Devengado = sum(Devengado) )%>%
         mutate(Concepto = 'Gasto Total') 
     }else{
-      jerarquia_dimension_regreso <- c(jerarquia_dimension_regreso,dimension_ida)
-      jerarquia_valor_dimension_regreso <- c(jerarquia_valor_dimension_regreso, "PlaceHolder")
       contador <- 2:length(jerarquia_dimension_regreso)
       for(z in  contador ){
         a <- jerarquia_dimension_regreso[[z]]
@@ -1208,11 +1172,7 @@ shinyServer(function(input, output, session) {
       }
     }
     print(tabla_temp)
-    print(tabla_temporal)
     
-    tabla_merge <- merge(tabla_temporal, tabla_temp, by = "Concepto")
-    print(tabla_merge)
-    datos_comparativos$data <- tabla_merge
     
     })
   
@@ -1295,39 +1255,4 @@ shinyServer(function(input, output, session) {
     
   })
   
-  
-  output$grafCon <- renderPlotly({
-    temp <- datos_comparativos$data
-    
-    tipo = ""
-    if(nrow(tabla_temporal) < 10 ){
-      tipo = 'bar'
-    }else{
-      tipo = 'scatter'
-    }
-    
-    
-    
-    
-    if (is.null(temp)) {
-      
-      p <- tabla_temporal %>%
-        plot_ly(x = ~Concepto, y = ~Devengado, mode = "markers", color = I('black'), name = 'Concepto', type = tipo, width = 0.03) %>%
-        layout(xaxis = list(showticklabels = FALSE) ,showlegend = T) %>% 
-        highlight("plotly_selected", color = I('red'), selected = attrs_selected(name = 'Filtered'))
-    } else{
-      pp <- temp %>%
-        plot_ly() %>% 
-        add_trace(x = ~Concepto, y = ~Devengado.x, mode = "markers", color = I('black'), name = input$year, type = tipo, width = 0.3) %>%
-        layout( showlegend = T)
-      
-      # selected data
-      pp <- add_trace(pp, temp, x = ~Concepto, y = ~Devengado.y, mode = "markers",
-                      color = I('red'), name = input$yearCom,type = 'scatter')
-    }
-    
-  })
-  
 })
-
-
