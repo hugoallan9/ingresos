@@ -29,10 +29,10 @@ opciones_filtro_inicio <- list("Sub.Grupo",
                                "Finalidad",
                                "Región",
                                "Grupo",
-                               "Económico del gasto" 
+                               "Económico.Nivel.1" 
 )
 
-mascara_filtro_inicio <- list("Subgrupo",
+mascara_filtro_inicio <- list("Sub grupo (Institucional)",
                               "Institución",
                               "Finalidad",
                               "Clasificación Geográfica",

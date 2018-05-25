@@ -13,9 +13,9 @@ library(leaflet)
 #require(DT)
 
 dashboardPage(
-  dashboardHeader(),
+  dashboardHeader(title = "Gastos"),
   dashboardSidebar(
-    selectInput("year","Ejercicio fiscal" ,choices = c(1998:format(Sys.Date(), "%Y")), selected = format(Sys.Date(), "%Y")  ),
+    selectInput("year",label = HTML('<p style="color:black">Ejercicio Fiscal <p>') ,choices = c(1998:format(Sys.Date(), "%Y")), selected = format(Sys.Date(), "%Y")  ),
     uiOutput("opcionesFiltro"),
     uiOutput("tipoVisualizacion")
   ),
@@ -79,19 +79,24 @@ dashboardPage(
                    )
                  ),
                  
-                 fluidRow(
-                   column(12, align = "right",
-                          uiOutput("Atras"))
-                 ),
+
                  
                  fluidRow(
-                   column(6, align = "center", offset = 0,
+                   column(12, align = "center", 
                           plotlyOutput("grafica")
-                   ),
-                   column(6, align = "center", offset = 0,
+                   )
+                 ), 
+                 
+                  fluidRow(
+                    column(12, align = "right",
+                    uiOutput("Atras"))
+                  ), 
+                  
+                  fluidRow(
+                   column(12, align = "left", 
                           DT::dataTableOutput("tabla")
                    ) )
-                 
+              
                  
                  
                  
@@ -108,9 +113,73 @@ dashboardPage(
     conditionalPanel(
       condition =  "output.condition == 100",
       dropdownButton(label = "Hola", icon = icon("gear"))
-    )
+    ),
     
-    
+    tags$head(tags$style(HTML('
+        /* logo */
+                              .skin-blue .main-header .logo {
+                              background-color: #605ca8;
+                              }
+                              
+                              /* logo when hovered */
+                              .skin-blue .main-header .logo:hover {
+                              background-color: #c6c3ff;
+
+                              }
+                              
+                              /* navbar (rest of the header) */
+                              .skin-blue .main-header .navbar {
+                              background-color: 	#605ca8;
+                              }        
+                              
+                              /* main sidebar */
+                              .skin-blue .main-sidebar {
+                              background-color: 	#FFFFFF;
+                              color = #000000;
+                                  border-bottom-width: 0.01px;
+    border-right-color: #D3D3D3;
+    border-right-style: solid;
+
+                              }
+
+
+                              
+                              .content-wrapper,
+                              .right-side {
+                              color: #000000;
+                              background-color: #ffffff;
+                                                            border-color: #605ca8;
+
+                              }
+
+                              /* active selected tab in the sidebarmenu */
+                              .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #ff0000;
+                              }
+                              
+                              /* other links in the sidebarmenu */
+                              .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                              background-color: #605ca8;
+                              color: #605ca8;
+                              }
+                              
+                              /* other links in the sidebarmenu when hovered */
+                              .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #ff69b4;
+                              }
+                              /* toggle button when hovered  */                    
+                              .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #c6c3ff;
+                              }
+
+                              label{color:black}
+                              p.dotted {border-style: dotted;}
+                              hr {border-top: 1px solid #000000;}"
+
+
+                              
+                              ' ) ) )
+     
     
     
     
